@@ -70,7 +70,11 @@ func injectFositeStore(c *config.Config, clients client.Manager) {
 
 func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 	var ctx = c.Context()
-	var store = ctx.FositeStore
+	var store = oauth2.CommonStore{
+		FositeStorer: ctx.FositeStore,
+		Manager:      km,
+		ClusterURL:   c.ClusterURL,
+	}
 
 	createRS256KeysIfNotExist(c, oauth2.OpenIDConnectKeyName, "private", "sig")
 	keys, err := km.GetKey(oauth2.OpenIDConnectKeyName, "private")
@@ -95,7 +99,8 @@ func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 		HashCost:              c.BCryptWorkFactor,
 		ScopeStrategy:         c.GetScopeStrategy(),
 	}
-	return compose.Compose(
+
+	fositeOAuth2Provider := compose.Compose(
 		fc,
 		store,
 		&compose.CommonStrategy{
@@ -106,6 +111,7 @@ func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 		compose.OAuth2AuthorizeExplicitFactory,
 		compose.OAuth2AuthorizeImplicitFactory,
 		compose.OAuth2ClientCredentialsGrantFactory,
+		oauth2.JWTBearerGrantFactory,
 		compose.OAuth2RefreshTokenGrantFactory,
 		compose.OpenIDConnectExplicitFactory,
 		compose.OpenIDConnectHybridFactory,
@@ -113,6 +119,9 @@ func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 		compose.OAuth2TokenRevocationFactory,
 		warden.OAuth2TokenIntrospectionFactory,
 	)
+	return &oauth2.HydraOAuth2Provider{
+		Fosite: fositeOAuth2Provider.(*fosite.Fosite),
+	}
 }
 
 func newOAuth2Handler(c *config.Config, router *httprouter.Router, cm oauth2.ConsentRequestManager, o fosite.OAuth2Provider) *oauth2.Handler {
