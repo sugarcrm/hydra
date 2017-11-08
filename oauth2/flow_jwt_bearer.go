@@ -151,5 +151,13 @@ func (c *JWTBearerGrantHandler) HandleTokenEndpointRequest(ctx context.Context, 
 
 // PopulateTokenEndpointResponse implements https://tools.ietf.org/html/rfc7523#section-3
 func (c *JWTBearerGrantHandler) PopulateTokenEndpointResponse(ctx context.Context, request fosite.AccessRequester, response fosite.AccessResponder) error {
-	return nil
+	if !request.GetGrantTypes().Exact(jwtBearerGrantType) {
+		return errors.WithStack(fosite.ErrUnknownRequest)
+	}
+
+	if !request.GetClient().GetGrantTypes().Has(jwtBearerGrantType) {
+		return errors.Wrap(fosite.ErrInvalidGrant, "The client is not allowed to use grant type client_credentials")
+	}
+
+	return c.IssueAccessToken(ctx, request, response)
 }
