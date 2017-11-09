@@ -29,7 +29,7 @@ func JWTBearerGrantFactory(config *compose.Config, storage interface{}, strategy
 			AccessTokenLifespan: config.GetAccessTokenLifespan(),
 		},
 		ScopeStrategy: fosite.HierarchicScopeStrategy,
-		KeyManager:    storage.(jwk.Manager),
+		KeyManager:    storage.(CommonStore).KeyManager,
 		Audience:      storage.(CommonStore).ClusterURL,
 	}
 }
@@ -108,9 +108,8 @@ func (c *JWTBearerGrantHandler) HandleTokenEndpointRequest(ctx context.Context, 
 	}
 
 	// For https://tools.ietf.org/html/rfc7523#section-3.1
-	// Additionally we check if it is a client ID.
-	// Checking client ID here is somewhat redundant since it was set earlier by the 'iss' field of this JWT,
-	// but let's leave it here to keep all checks in one place.
+	// We check that client ID obtained from the Basic auth is what was stated as 'iss' in JWT.
+	// Otherwise it can be a client ID forgery attempt.
 	if !claims.VerifyIssuer(client.GetID(), true) {
 		return errors.Wrap(fosite.ErrTokenClaim, "Issuer (iss) claim should be present and should be your client ID")
 	}
@@ -149,14 +148,14 @@ func (c *JWTBearerGrantHandler) HandleTokenEndpointRequest(ctx context.Context, 
 	return nil
 }
 
-// PopulateTokenEndpointResponse implements https://tools.ietf.org/html/rfc7523#section-3
+// PopulateTokenEndpointResponse implements https://tools.ietf.org/html/rfc6749#section-4.4.3
 func (c *JWTBearerGrantHandler) PopulateTokenEndpointResponse(ctx context.Context, request fosite.AccessRequester, response fosite.AccessResponder) error {
 	if !request.GetGrantTypes().Exact(jwtBearerGrantType) {
 		return errors.WithStack(fosite.ErrUnknownRequest)
 	}
 
 	if !request.GetClient().GetGrantTypes().Has(jwtBearerGrantType) {
-		return errors.Wrap(fosite.ErrInvalidGrant, "The client is not allowed to use grant type client_credentials")
+		return errors.Wrap(fosite.ErrInvalidGrant, fmt.Sprintf("The client is not allowed to use grant type %s", jwtBearerGrantType))
 	}
 
 	return c.IssueAccessToken(ctx, request, response)

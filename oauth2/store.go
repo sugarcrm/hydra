@@ -7,7 +7,7 @@ import (
 
 // CommonStore is Hydra specific store that obtains additional information for the application.
 type CommonStore struct {
-	jwk.Manager
 	pkg.FositeStorer
+	KeyManager jwk.Manager
 	ClusterURL string
 }
