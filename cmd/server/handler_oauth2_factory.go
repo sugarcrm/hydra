@@ -58,7 +58,7 @@ func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 	var ctx = c.Context()
 	var store = oauth2.CommonStore{
 		FositeStorer: ctx.FositeStore,
-		Manager:      km,
+		KeyManager:   km,
 		ClusterURL:   c.ClusterURL,
 	}
 
@@ -85,7 +85,7 @@ func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 		HashCost:              c.BCryptWorkFactor,
 	}
 
-	fositeOAuth2Provider := compose.Compose(
+	return compose.Compose(
 		fc,
 		store,
 		&compose.CommonStrategy{
@@ -104,9 +104,6 @@ func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 		compose.OAuth2TokenRevocationFactory,
 		warden.OAuth2TokenIntrospectionFactory,
 	)
-	return &oauth2.HydraOAuth2Provider{
-		Fosite: fositeOAuth2Provider.(*fosite.Fosite),
-	}
 }
 
 func newOAuth2Handler(c *config.Config, router *httprouter.Router, km jwk.Manager, o fosite.OAuth2Provider) *oauth2.Handler {
