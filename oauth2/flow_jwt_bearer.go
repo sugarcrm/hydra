@@ -30,7 +30,7 @@ func JWTBearerGrantFactory(config *compose.Config, storage interface{}, strategy
 		},
 		ScopeStrategy: fosite.HierarchicScopeStrategy,
 		KeyManager:    storage.(CommonStore).KeyManager,
-		Audience:      storage.(CommonStore).ClusterURL,
+		Audience:      strings.Trim(storage.(CommonStore).ClusterURL, "/") + "/oauth2/token",
 	}
 }
 
@@ -74,32 +74,40 @@ func (c *JWTBearerGrantHandler) HandleTokenEndpointRequest(ctx context.Context, 
 		// We stick to this option: https://tools.ietf.org/html/rfc7515#section-4.1.4
 		keyID, _ := token.Header["kid"].(string)
 		if keyID == "" {
-			return nil, errors.Wrap(fosite.ErrInvalidTokenFormat,
-				"Your key-set id should be present in 'kid' of the JOSE header")
+			return nil, fmt.Errorf("your key-set ID should be present in 'kid' of the JOSE header")
 		}
 		switch token.Method.(type) {
 		case *jwt.SigningMethodRSA, *jwt.SigningMethodECDSA:
 			ks, err := c.KeyManager.GetKey(keyID, "public")
 			if err != nil {
-				return nil, errors.Wrap(fosite.ErrServerError, err.Error())
+				return nil, err
 			}
 			rsaKey, ok := jwk.First(ks.Keys).Key.(*rsa.PublicKey)
 			if !ok {
-				return nil, errors.Wrap(fosite.ErrServerError, "Could not convert to RSA Public Key")
+				return nil, fmt.Errorf("could not convert to RSA Public Key")
 			}
 			return rsaKey, nil
 		default:
-			return nil, errors.Wrap(
-				fosite.ErrInvalidTokenFormat,
-				fmt.Sprintf("Unexpected signing method: '%v'. We support only RSA, ECDSA", token.Header["alg"]))
+			return nil, fmt.Errorf("unexpected signing method: '%v'. We support only RSA, ECDSA", token.Header["alg"])
 		}
 	})
 
 	if err != nil {
-		return errors.Wrap(fosite.ErrInactiveToken, err.Error())
-	}
-	if !token.Valid {
-		return errors.Wrap(fosite.ErrTokenSignatureMismatch, "Your JWT token failed to pass a signature validation")
+		// Catch possible jwt.Parse errors.
+		if e, ok := errors.Cause(err).(*jwt.ValidationError); ok {
+			switch e.Errors {
+			case jwt.ValidationErrorUnverifiable, jwt.ValidationErrorSignatureInvalid:
+				return errors.Wrap(fosite.ErrTokenSignatureMismatch, err.Error())
+			case jwt.ValidationErrorExpired:
+				return errors.Wrap(fosite.ErrTokenExpired, err.Error())
+			case jwt.ValidationErrorIssuedAt:
+				return errors.Wrap(fosite.ErrInactiveToken, err.Error())
+			default:
+				return errors.Wrap(fosite.ErrInvalidTokenFormat, err.Error())
+			}
+		}
+		// It means we have some unknown error.
+		return errors.Wrap(fosite.ErrServerError, err.Error())
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
@@ -114,20 +122,21 @@ func (c *JWTBearerGrantHandler) HandleTokenEndpointRequest(ctx context.Context, 
 		return errors.Wrap(fosite.ErrTokenClaim, "Issuer (iss) claim should be present and should be your client ID")
 	}
 	// For https://tools.ietf.org/html/rfc7523#section-3.2
-	if claims["sub"] == "" {
-		errors.Wrap(fosite.ErrTokenClaim, "Subject (sub) claim should be present")
+	if val, ok := claims["sub"].(string); !ok || val == "" {
+		return errors.Wrap(fosite.ErrTokenClaim, "Subject (sub) claim should be a nonempty string")
 	}
 	// For https://tools.ietf.org/html/rfc7523#section-3.3
-	if !claims.VerifyAudience(strings.Trim(c.Audience, "/")+"/oauth2/token", true) {
-		errors.Wrap(fosite.ErrTokenClaim, "Audience (aud) claim should be present")
+	if !claims.VerifyAudience(c.Audience, true) {
+		return errors.Wrap(fosite.ErrTokenClaim, "Audience (aud) is invalid or missing")
 	}
 	// For https://tools.ietf.org/html/rfc7523#section-3.3
-	if !claims.VerifyExpiresAt(time.Now().Unix(), true) {
-		errors.Wrap(fosite.ErrTokenExpired, "Expires (exp) claim should be present. JWT should not be expired")
+	// Actually jwt.Parse already checks exp value, but it does not require it to be present, so re-checking it.
+	if _, ok := claims["exp"]; !ok {
+		return errors.Wrap(fosite.ErrTokenClaim, "Expires (exp) claim should be present")
 	}
-	// This is a custom claim for detecting tenant ID.
-	if claims["tnt"] == "" {
-		errors.Wrap(fosite.ErrTokenClaim, "Tenant (tnt) claim should be present and be a tenant identifier")
+	// Actually jwt.Parse already checks iat value, but it does not require it to be present, so re-checking it.
+	if _, ok := claims["iat"]; !ok {
+		return errors.Wrap(fosite.ErrTokenClaim, "Issued at (iat) claim should be present")
 	}
 
 	// The client MUST authenticate with the authorization server as described in Section 3.2.1.
@@ -143,8 +152,11 @@ func (c *JWTBearerGrantHandler) HandleTokenEndpointRequest(ctx context.Context, 
 	}
 
 	session.SetExpiresAt(fosite.AccessToken, time.Now().Add(c.AccessTokenLifespan))
-	session.Username = claims["sub"].(string)
-	session.SetExtra("tenant", claims["tnt"])
+	session.Subject = claims["sub"].(string)
+	// Use custom claim for detecting tenant ID.
+	if val, ok := claims["tnt"]; ok && val != "" {
+		session.SetExtra("tenant", val)
+	}
 	return nil
 }
 
