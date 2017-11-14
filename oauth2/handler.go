@@ -276,7 +276,6 @@ func (h *Handler) TokenHandler(w http.ResponseWriter, r *http.Request, _ httprou
 	}
 
 	if accessRequest.GetGrantTypes().Exact(jwtBearerGrantType) {
-		session.Subject = accessRequest.GetClient().GetID()
 		for _, scope := range accessRequest.GetRequestedScopes() {
 			if fosite.HierarchicScopeStrategy(accessRequest.GetClient().GetScopes(), scope) {
 				accessRequest.GrantScope(scope)
