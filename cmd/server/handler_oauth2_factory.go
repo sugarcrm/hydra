@@ -56,7 +56,11 @@ func injectFositeStore(c *config.Config, clients client.Manager) {
 
 func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 	var ctx = c.Context()
-	var store = ctx.FositeStore
+	var store = oauth2.CommonStore{
+		FositeStorer: ctx.FositeStore,
+		KeyManager:   km,
+		ClusterURL:   c.ClusterURL,
+	}
 
 	createRS256KeysIfNotExist(c, oauth2.OpenIDConnectKeyName, "private", "sig")
 	keys, err := km.GetKey(oauth2.OpenIDConnectKeyName, "private")
@@ -80,6 +84,7 @@ func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 		IDTokenLifespan:       c.GetIDTokenLifespan(),
 		HashCost:              c.BCryptWorkFactor,
 	}
+
 	return compose.Compose(
 		fc,
 		store,
@@ -91,6 +96,7 @@ func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 		compose.OAuth2AuthorizeExplicitFactory,
 		compose.OAuth2AuthorizeImplicitFactory,
 		compose.OAuth2ClientCredentialsGrantFactory,
+		oauth2.JWTBearerGrantFactory,
 		compose.OAuth2RefreshTokenGrantFactory,
 		compose.OpenIDConnectExplicitFactory,
 		compose.OpenIDConnectHybridFactory,

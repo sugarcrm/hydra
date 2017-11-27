@@ -265,6 +265,16 @@ Then run it with in-memory database:
 DATABASE_URL=memory go run main.go host
 ```
 
+If you want to add mocks for the interfaces you are being testing, refer to [generator script](generate-mocks.sh).
+* Add needed mocks generation to this script.
+* Then run
+```bash
+go get github.com/golang/mock/gomock # if you don't have it
+go get github.com/golang/mock/mockgen # if you don't have it
+go get golang.org/x/tools/cmd/goimports # if you don't have it
+./generate-mocks.sh
+```
+
 **Notes**
 
 * We changed organization name from `ory-am` to `ory`. In order to keep backwards compatibility, we did not rename Go packages.

@@ -7,9 +7,12 @@ import (
 	"github.com/ory/fosite/token/jwt"
 )
 
+// SessionExtraInfo is for extra values we want to be stored in session
+type SessionExtraInfo map[string]interface{}
+
 type Session struct {
 	*openid.DefaultSession `json:"idToken"`
-	Extra                  map[string]interface{} `json:"extra"`
+	Extra                  SessionExtraInfo `json:"extra"`
 }
 
 func NewSession(subject string) *Session {
@@ -28,4 +31,14 @@ func (s *Session) Clone() fosite.Session {
 	}
 
 	return deepcopy.Copy(s).(fosite.Session)
+}
+
+// SetExtra sets one extra attribute to session.
+// Additionally lazy-allocated Extra field.
+func (s *Session) SetExtra(key string, value interface{}) {
+	// Deferred initialization.
+	if s.Extra == nil {
+		s.Extra = make(SessionExtraInfo)
+	}
+	s.Extra[key] = value
 }
