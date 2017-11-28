@@ -9,5 +9,5 @@ import (
 type CommonStore struct {
 	pkg.FositeStorer
 	KeyManager jwk.Manager
-	ClusterURL string
+	Issuer     string
 }
