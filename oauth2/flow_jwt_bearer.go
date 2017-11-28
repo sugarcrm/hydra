@@ -30,7 +30,7 @@ func JWTBearerGrantFactory(config *compose.Config, storage interface{}, strategy
 		},
 		ScopeStrategy: fosite.HierarchicScopeStrategy,
 		KeyManager:    storage.(CommonStore).KeyManager,
-		Audience:      strings.Trim(storage.(CommonStore).ClusterURL, "/") + "/oauth2/token",
+		Audience:      strings.Trim(storage.(CommonStore).Issuer, "/") + "/oauth2/token",
 	}
 }
 
