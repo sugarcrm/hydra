@@ -163,6 +163,8 @@ func initConfig() {
 	viper.BindEnv("OIDC_DISCOVERY_USERINFO_ENDPOINT")
 	viper.SetDefault("OIDC_DISCOVERY_USERINFO_ENDPOINT", "")
 
+	viper.BindEnv("JWT_PARSE_TIME_WINDOW")
+
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Printf(`Config file not found because "%s"`, err)

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ory/hydra/jwk"
+	"github.com/ory/hydra/pkg"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/ory/fosite"
@@ -70,7 +71,7 @@ func (c *JWTBearerGrantHandler) HandleTokenEndpointRequest(ctx context.Context, 
 		return errors.Wrap(fosite.ErrInvalidRequest, "Field 'assertion' is missing")
 	}
 
-	token, err := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
+	token, err := pkg.JWTParseUsingTimeWindow(jwtToken, func(token *jwt.Token) (interface{}, error) {
 		// We stick to this option: https://tools.ietf.org/html/rfc7515#section-4.1.4
 		keyID, _ := token.Header["kid"].(string)
 		if keyID == "" {
