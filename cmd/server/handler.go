@@ -141,6 +141,9 @@ func (h *Handler) registerRoutes(router *httprouter.Router) {
 		L:                   c.GetLogger(),
 	}
 
+	// Set up time window for JWT parsing
+	pkg.SetJWTParseTimeWindow(c.JWTParseTimeWindow)
+
 	// Set up handlers
 	h.Clients = newClientHandler(c, router, clientsManager)
 	h.Keys = newJWKHandler(c, router)

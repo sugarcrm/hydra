@@ -11,6 +11,7 @@ import (
 	"github.com/ory/fosite/handler/openid"
 	ejwt "github.com/ory/fosite/token/jwt"
 	"github.com/ory/hydra/jwk"
+	"github.com/ory/hydra/pkg"
 	"github.com/pborman/uuid"
 	"github.com/pkg/errors"
 )
@@ -29,7 +30,7 @@ type DefaultConsentStrategy struct {
 }
 
 func (s *DefaultConsentStrategy) ValidateResponse(a fosite.AuthorizeRequester, token string, session *sessions.Session) (claims *Session, err error) {
-	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+	t, err := pkg.JWTParseUsingTimeWindow(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, errors.Errorf("Unexpected signing method: %v", t.Header["alg"])
 		}

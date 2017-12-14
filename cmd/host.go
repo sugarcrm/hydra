@@ -92,6 +92,10 @@ OAUTH2 CONTROLS
 - CHALLENGE_TOKEN_LIFESPAN: Lifespan of OAuth2 consent tokens. Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	Defaults to CHALLENGE_TOKEN_LIFESPAN=10m
 
+- JWT_PARSE_TIME_WINDOW: Time window in seconds for OAuth2 JWT token time-specific claims parsing.
+	Is useful if you producer/consumer servers are not accurately time-synced. Valid values are: 10, 17, 60, etc.
+	Defaults to JWT_PARSE_TIME_WINDOW=0
+
 
 HTTPS CONTROLS
 ==============

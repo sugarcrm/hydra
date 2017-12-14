@@ -9,6 +9,7 @@ import (
 	ejwt "github.com/ory/fosite/token/jwt"
 	"github.com/ory/hydra/jwk"
 	"github.com/ory/hydra/oauth2"
+	"github.com/ory/hydra/pkg"
 	"github.com/pkg/errors"
 )
 
@@ -73,7 +74,7 @@ func (c *ChallengeClaims) Valid() error {
 //  // ...
 func (c *Consent) VerifyChallenge(challenge string) (*ChallengeClaims, error) {
 	var claims ChallengeClaims
-	t, err := jwt.ParseWithClaims(challenge, &claims, func(t *jwt.Token) (interface{}, error) {
+	t, err := pkg.JWTParseWithClaimsUsingTimeWindow(challenge, &claims, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, errors.Errorf("Unexpected signing method: %v", t.Header["alg"])
 		}

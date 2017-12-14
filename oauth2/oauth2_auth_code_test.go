@@ -27,7 +27,7 @@ func TestAuthCode(t *testing.T) {
 	var code string
 	var validConsent bool
 	router.GET("/consent", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		tok, err := jwt.Parse(r.URL.Query().Get("challenge"), func(tt *jwt.Token) (interface{}, error) {
+		tok, err := pkg.JWTParseUsingTimeWindow(r.URL.Query().Get("challenge"), func(tt *jwt.Token) (interface{}, error) {
 			if _, ok := tt.Method.(*jwt.SigningMethodRSA); !ok {
 				return nil, errors.Errorf("Unexpected signing method: %v", tt.Header["alg"])
 			}

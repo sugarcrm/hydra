@@ -57,6 +57,7 @@ type Config struct {
 	LogLevel               string `mapstructure:"LOG_LEVEL" yaml:"-"`
 	LogFormat              string `mapstructure:"LOG_FORMAT" yaml:"-"`
 	ForceHTTP              bool   `yaml:"-"`
+	JWTParseTimeWindow 	   uint   `mapstructure:"JWT_PARSE_TIME_WINDOW" yaml:"-"`
 
 	BuildVersion string                  `yaml:"-"`
 	BuildHash    string                  `yaml:"-"`
