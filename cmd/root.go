@@ -136,6 +136,8 @@ func initConfig() {
 	viper.BindEnv("LOG_FORMAT")
 	viper.SetDefault("LOG_FORMAT", "")
 
+	viper.BindEnv("JWT_PARSE_TIME_WINDOW")
+
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Printf(`Config file not found because "%s"`, err)
