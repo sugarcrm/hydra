@@ -106,6 +106,9 @@ func initConfig() {
 	viper.BindEnv("CONSENT_URL")
 	viper.SetDefault("CONSENT_URL", oauth2.DefaultConsentPath)
 
+	viper.BindEnv("CONSENT_EXTRA_PARAMS")
+	viper.SetDefault("CONSENT_EXTRA_PARAMS", "")
+
 	viper.BindEnv("DATABASE_PLUGIN")
 	viper.SetDefault("DATABASE_PLUGIN", "")
 

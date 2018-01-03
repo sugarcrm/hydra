@@ -133,6 +133,9 @@ OPENID CONNECT CONTROLS
 	Is useful if you producer/consumer servers are not accurately time-synced. Valid values are: 10, 17, 60, etc.
 	Defaults to JWT_PARSE_TIME_WINDOW=0
 
+- CONSENT_EXTRA_PARAMS: Comma separated list of additional parameters allowed for consent challenge token
+	Example: CONSENT_EXTRA_PARAMS=tid,extra
+
 
 HTTPS CONTROLS
 ==============

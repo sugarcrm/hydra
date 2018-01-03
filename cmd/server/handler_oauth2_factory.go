@@ -32,6 +32,7 @@ import (
 	"github.com/ory/hydra/pkg"
 	"github.com/ory/hydra/warden"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 func injectFositeStore(c *config.Config, clients client.Manager) {
