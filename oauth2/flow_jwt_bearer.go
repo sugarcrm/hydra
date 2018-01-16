@@ -47,7 +47,7 @@ func (c *JWTBearerGrantHandler) HandleTokenEndpointRequest(ctx context.Context, 
 	// grant_type REQUIRED.
 	// Value MUST be set to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer".
 	if !request.GetGrantTypes().Exact(jwtBearerGrantType) {
-		return errors.WithStack(fosite.ErrUnknownRequest)
+		return errors.Wrap(fosite.ErrUnknownRequest, fosite.ErrUnknownRequest.Description)
 	}
 
 	client := request.GetClient()

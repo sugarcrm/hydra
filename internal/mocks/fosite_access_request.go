@@ -162,6 +162,16 @@ func (mr *MockAccessRequesterMockRecorder) Merge(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Merge", reflect.TypeOf((*MockAccessRequester)(nil).Merge), arg0)
 }
 
+// SetID mocks base method
+func (m *MockAccessRequester) SetID(arg0 string) {
+	m.ctrl.Call(m, "SetID", arg0)
+}
+
+// SetID indicates an expected call of SetID
+func (mr *MockAccessRequesterMockRecorder) SetID(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetID", reflect.TypeOf((*MockAccessRequester)(nil).SetID), arg0)
+}
+
 // SetRequestedScopes mocks base method
 func (m *MockAccessRequester) SetRequestedScopes(arg0 fosite.Arguments) {
 	m.ctrl.Call(m, "SetRequestedScopes", arg0)
