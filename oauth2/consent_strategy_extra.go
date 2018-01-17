@@ -1,17 +1,13 @@
 package oauth2
 
 import (
-	"crypto/rsa"
-	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/sessions"
 	"github.com/ory/fosite"
-	"github.com/ory/hydra/jwk"
-	"github.com/pborman/uuid"
-	"github.com/pkg/errors"
 	"net/url"
+	"github.com/pkg/errors"
+	"github.com/pborman/uuid"
 )
 
 type ExtraParametersConsentStrategy struct {
@@ -19,24 +15,26 @@ type ExtraParametersConsentStrategy struct {
 
 	DefaultIDTokenLifespan   time.Duration
 	DefaultChallengeLifespan time.Duration
-	KeyManager               jwk.Manager
+	ConsentManager           ConsentRequestManager
 	ExtraParameters []string
 }
 
-func (s *ExtraParametersConsentStrategy) ValidateResponse(a fosite.AuthorizeRequester, token string, session *sessions.Session) (claims *Session, err error) {
+func (s *ExtraParametersConsentStrategy) ValidateConsentRequest(req fosite.AuthorizeRequester, session string, cookie *sessions.Session) (claims *Session, err error) {
 	defaultStrategy := &DefaultConsentStrategy{
 		Issuer:                   s.Issuer,
-		KeyManager:               s.KeyManager,
+		ConsentManager:           s.ConsentManager,
 		DefaultChallengeLifespan: s.DefaultChallengeLifespan,
 		DefaultIDTokenLifespan:   s.DefaultIDTokenLifespan,
 	}
 
-	return defaultStrategy.ValidateResponse(a, token, session)
+	return defaultStrategy.ValidateConsentRequest(req, session, cookie)
 }
 
-func (s *ExtraParametersConsentStrategy) IssueChallenge(authorizeRequest fosite.AuthorizeRequester, redirectURL string, session *sessions.Session) (string, error) {
-	token := jwt.New(jwt.SigningMethodRS256)
-	jti := uuid.New()
+func (s *ExtraParametersConsentStrategy) CreateConsentRequest(req fosite.AuthorizeRequester, redirectURL string, cookie *sessions.Session) (string, error) {
+	csrf := uuid.New()
+	id := uuid.New()
+
+	cookie.Values[CookieCSRFKey] = csrf
 	redirectURLParams, err := url.ParseQuery(redirectURL)
 	if err != nil {
 		return "", errors.WithStack(err)
@@ -44,36 +42,25 @@ func (s *ExtraParametersConsentStrategy) IssueChallenge(authorizeRequest fosite.
 	atExt := make(map[string]interface{})
 	for _, parameter := range s.ExtraParameters {
 		if redirectURLParams[parameter] != nil {
-			atExt[parameter] = redirectURLParams[parameter][0]
-		}
-	}
-	token.Claims = jwt.MapClaims{
-		"jti":    jti,
-		"scp":    authorizeRequest.GetRequestedScopes(),
-		"aud":    authorizeRequest.GetClient().GetID(),
-		"exp":    time.Now().Add(s.DefaultChallengeLifespan).Unix(),
-		"redir":  redirectURL,
-		"at_ext": atExt,
+				atExt[parameter] = redirectURLParams[parameter][0]
+			}
 	}
 
-	session.Values["consent_jti"] = jti
-	ks, err := s.KeyManager.GetKey(ConsentChallengeKey, "private")
-	if err != nil {
+	consent := &ConsentRequest{
+		ID:               id,
+		CSRF:             csrf,
+		GrantedScopes:    []string{},
+		RequestedScopes:  req.GetRequestedScopes(),
+		ClientID:         req.GetClient().GetID(),
+		ExpiresAt:        time.Now().Add(s.DefaultChallengeLifespan),
+		RedirectURL:      redirectURL + "&consent=" + id,
+		AccessTokenExtra: atExt,
+		IDTokenExtra:     map[string]interface{}{},
+	}
+
+	if err := s.ConsentManager.PersistConsentRequest(consent); err != nil {
 		return "", errors.WithStack(err)
 	}
 
-	rsaKey, ok := jwk.First(ks.Keys).Key.(*rsa.PrivateKey)
-	if !ok {
-		return "", errors.New("Could not convert to RSA Private Key")
-	}
-
-	var signature, encoded string
-	if encoded, err = token.SigningString(); err != nil {
-		return "", errors.WithStack(err)
-	} else if signature, err = token.Method.Sign(encoded, rsaKey); err != nil {
-		return "", errors.WithStack(err)
-	}
-
-	return fmt.Sprintf("%s.%s", encoded, signature), nil
-
+	return id, nil
 }
