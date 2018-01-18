@@ -106,6 +106,9 @@ func initConfig() {
 	viper.BindEnv("CONSENT_URL")
 	viper.SetDefault("CONSENT_URL", oauth2.DefaultConsentPath)
 
+	viper.BindEnv("CONSENT_EXTRA_PARAMS")
+	viper.SetDefault("CONSENT_EXTRA_PARAMS", "")
+
 	viper.BindEnv("DATABASE_PLUGIN")
 	viper.SetDefault("DATABASE_PLUGIN", "")
 
@@ -162,6 +165,8 @@ func initConfig() {
 
 	viper.BindEnv("OIDC_DISCOVERY_USERINFO_ENDPOINT")
 	viper.SetDefault("OIDC_DISCOVERY_USERINFO_ENDPOINT", "")
+
+	viper.BindEnv("JWT_PARSE_TIME_WINDOW")
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {

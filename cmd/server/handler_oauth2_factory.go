@@ -17,6 +17,7 @@ package server
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"os"
 
@@ -70,7 +71,11 @@ func injectFositeStore(c *config.Config, clients client.Manager) {
 
 func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 	var ctx = c.Context()
-	var store = ctx.FositeStore
+	var store = oauth2.CommonStore{
+		FositeStorer: ctx.FositeStore,
+		KeyManager:   km,
+		Issuer:       c.Issuer,
+	}
 
 	createRS256KeysIfNotExist(c, oauth2.OpenIDConnectKeyName, "private", "sig")
 	keys, err := km.GetKey(oauth2.OpenIDConnectKeyName, "private")
@@ -95,6 +100,7 @@ func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 		HashCost:              c.BCryptWorkFactor,
 		ScopeStrategy:         c.GetScopeStrategy(),
 	}
+
 	return compose.Compose(
 		fc,
 		store,
@@ -106,6 +112,7 @@ func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 		compose.OAuth2AuthorizeExplicitFactory,
 		compose.OAuth2AuthorizeImplicitFactory,
 		compose.OAuth2ClientCredentialsGrantFactory,
+		oauth2.JWTBearerGrantFactory,
 		compose.OAuth2RefreshTokenGrantFactory,
 		compose.OpenIDConnectExplicitFactory,
 		compose.OpenIDConnectHybridFactory,
@@ -131,6 +138,24 @@ func newOAuth2Handler(c *config.Config, router *httprouter.Router, cm oauth2.Con
 	consentURL, err := url.Parse(c.ConsentURL)
 	pkg.Must(err, "Could not parse consent url %s.", c.ConsentURL)
 
+	var consent oauth2.ConsentStrategy
+	if c.ConsentExtraParams != "" {
+		consent = &oauth2.ExtraParametersConsentStrategy{
+			Issuer:                   c.Issuer,
+			ConsentManager:           c.Context().ConsentManager,
+			DefaultChallengeLifespan: c.GetChallengeTokenLifespan(),
+			DefaultIDTokenLifespan:   c.GetIDTokenLifespan(),
+			ExtraParameters:          strings.Split(c.ConsentExtraParams, ","),
+		}
+	} else {
+		consent = &oauth2.DefaultConsentStrategy{
+			Issuer:                   c.Issuer,
+			ConsentManager:           c.Context().ConsentManager,
+			DefaultChallengeLifespan: c.GetChallengeTokenLifespan(),
+			DefaultIDTokenLifespan:   c.GetIDTokenLifespan(),
+		}
+	}
+
 	handler := &oauth2.Handler{
 		ScopesSupported:  c.OpenIDDiscoveryScopesSupported,
 		UserinfoEndpoint: c.OpenIDDiscoveryUserinfoEndpoint,
@@ -138,12 +163,7 @@ func newOAuth2Handler(c *config.Config, router *httprouter.Router, cm oauth2.Con
 		ForcedHTTP:       c.ForceHTTP,
 		OAuth2:           o,
 		ScopeStrategy:    c.GetScopeStrategy(),
-		Consent: &oauth2.DefaultConsentStrategy{
-			Issuer:                   c.Issuer,
-			ConsentManager:           c.Context().ConsentManager,
-			DefaultChallengeLifespan: c.GetChallengeTokenLifespan(),
-			DefaultIDTokenLifespan:   c.GetIDTokenLifespan(),
-		},
+		Consent: 		  consent,
 		ConsentURL:          *consentURL,
 		H:                   herodot.NewJSONWriter(c.GetLogger()),
 		AccessTokenLifespan: c.GetAccessTokenLifespan(),

@@ -174,6 +174,25 @@ go install github.com/ory/hydra
 hydra
 ```
 
+#### Building from SugarCRM source
+
+If you wish to compile ORY Hydra yourself, you need to install and set up [Go 1.9+](https://golang.org/) and add `$GOPATH/bin`
+to your `$PATH` as well as [golang/dep](http://github.com/golang/dep). To do so, run the following commands in a shell (bash, sh, cmd.exe, ...):
+
+```
+git clone git@github.com:sugarcrm/hydra.git $GOPATH/src/github.com/ory/hydra
+cd $GOPATH/src/github.com/ory/hydra
+dep ensure
+go install github.com/ory/hydra
+hydra
+```
+
+#### Database creation or migration
+
+```
+hydra migrate sql mysql://user:password@tcp\(localhost:3306\)/hydra?parseTime=true
+```
+
 **Notes**
 
 * We changed organization name from `ory-am` to `ory`. In order to keep backwards compatibility, we did not rename Go packages.
@@ -259,6 +278,16 @@ Then run it with in-memory database:
 
 ```
 DATABASE_URL=memory go run main.go host
+```
+
+If you want to add mocks for the interfaces you are being testing, refer to [generator script](generate-mocks.sh).
+* Add needed mocks generation to this script.
+* Then run
+```bash
+go get github.com/golang/mock/gomock # if you don't have it
+go get github.com/golang/mock/mockgen # if you don't have it
+go get golang.org/x/tools/cmd/goimports # if you don't have it
+./generate-mocks.sh
 ```
 
 **Notes**
