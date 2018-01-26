@@ -74,7 +74,7 @@ type Config struct {
 	OpenIDDiscoveryScopesSupported  string `mapstructure:"OIDC_DISCOVERY_SCOPES_SUPPORTED" yaml:"-"`
 	OpenIDDiscoveryUserinfoEndpoint string `mapstructure:"OIDC_DISCOVERY_USERINFO_ENDPOINT" yaml:"-"`
 	ForceHTTP                       bool   `yaml:"-"`
-	JWTParseTimeWindow 	   			uint   `mapstructure:"JWT_PARSE_TIME_WINDOW" yaml:"-"`
+	JWTParseTimeWindow 	   uint   `mapstructure:"JWT_PARSE_TIME_WINDOW" yaml:"-"`
 
 	BuildVersion string                  `yaml:"-"`
 	BuildHash    string                  `yaml:"-"`
