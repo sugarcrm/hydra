@@ -18,7 +18,6 @@ import (
 	"github.com/ory/hydra/pkg"
 	"github.com/ory/hydra/warden"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 func injectFositeStore(c *config.Config, clients client.Manager) {
@@ -123,28 +122,15 @@ func newOAuth2Handler(c *config.Config, router *httprouter.Router, km jwk.Manage
 	consentURL, err := url.Parse(c.ConsentURL)
 	pkg.Must(err, "Could not parse consent url %s.", c.ConsentURL)
 
-	var consent oauth2.ConsentStrategy
-	if c.ConsentExtraParams != "" {
-		consent = &oauth2.ExtraParametersConsentStrategy{
-			Issuer:                   c.Issuer,
-			KeyManager:               km,
-			DefaultChallengeLifespan: c.GetChallengeTokenLifespan(),
-			DefaultIDTokenLifespan:   c.GetIDTokenLifespan(),
-			ExtraParameters:          strings.Split(c.ConsentExtraParams, ","),
-		}
-	} else {
-		consent = &oauth2.DefaultConsentStrategy{
-			Issuer:                   c.Issuer,
-			KeyManager:               km,
-			DefaultChallengeLifespan: c.GetChallengeTokenLifespan(),
-			DefaultIDTokenLifespan:   c.GetIDTokenLifespan(),
-		}
-	}
-
 	handler := &oauth2.Handler{
 		ForcedHTTP: c.ForceHTTP,
 		OAuth2:     o,
-		Consent:    consent,
+		Consent: &oauth2.DefaultConsentStrategy{
+			Issuer:                   c.Issuer,
+			KeyManager:               km,
+			DefaultChallengeLifespan: c.GetChallengeTokenLifespan(),
+			DefaultIDTokenLifespan:   c.GetIDTokenLifespan(),
+		},
 		ConsentURL:          *consentURL,
 		H:                   herodot.NewJSONWriter(c.GetLogger()),
 		AccessTokenLifespan: c.GetAccessTokenLifespan(),
