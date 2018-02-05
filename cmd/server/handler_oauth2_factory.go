@@ -17,7 +17,6 @@ package server
 import (
 	"fmt"
 	"net/url"
-	"strings"
 
 	"os"
 
