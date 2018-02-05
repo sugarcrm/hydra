@@ -59,7 +59,6 @@ type Config struct {
 	DatabaseURL                     string `mapstructure:"DATABASE_URL" yaml:"-"`
 	DatabasePlugin                  string `mapstructure:"DATABASE_PLUGIN" yaml:"-"`
 	ConsentURL                      string `mapstructure:"CONSENT_URL" yaml:"-"`
-	ConsentExtraParams     			string `mapstructure:"CONSENT_EXTRA_PARAMS" yaml:"-"`
 	AllowTLSTermination             string `mapstructure:"HTTPS_ALLOW_TERMINATION_FROM" yaml:"-"`
 	BCryptWorkFactor                int    `mapstructure:"BCRYPT_COST" yaml:"-"`
 	AccessTokenLifespan             string `mapstructure:"ACCESS_TOKEN_LIFESPAN" yaml:"-"`
@@ -75,7 +74,7 @@ type Config struct {
 	OpenIDDiscoveryScopesSupported  string `mapstructure:"OIDC_DISCOVERY_SCOPES_SUPPORTED" yaml:"-"`
 	OpenIDDiscoveryUserinfoEndpoint string `mapstructure:"OIDC_DISCOVERY_USERINFO_ENDPOINT" yaml:"-"`
 	ForceHTTP                       bool   `yaml:"-"`
-	JWTParseTimeWindow 	   			uint   `mapstructure:"JWT_PARSE_TIME_WINDOW" yaml:"-"`
+	JWTParseTimeWindow 	   uint   `mapstructure:"JWT_PARSE_TIME_WINDOW" yaml:"-"`
 
 	BuildVersion string                  `yaml:"-"`
 	BuildHash    string                  `yaml:"-"`
