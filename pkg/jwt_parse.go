@@ -36,37 +36,33 @@ func JWTParseWithClaimsUsingTimeWindow(tokenString string, claims jwt.Claims, ke
 func parseJWT(tokenString string, claims jwt.Claims, keyFunc jwt.Keyfunc) (*jwt.Token, error) {
 	var token *jwt.Token
 	var err error
-	timeFuncOriginal := jwt.TimeFunc
-	doRetry := func(err error) bool {
-		// if window is not specified - no need to retry.
-		if timeWindow == 0 {
-			return false
-		}
-		if err != nil {
-			if e, ok := errors.Cause(err).(*jwt.ValidationError); ok {
-				switch e.Errors {
-				case jwt.ValidationErrorIssuedAt, jwt.ValidationErrorExpired, jwt.ValidationErrorNotValidYet:
-					return true
+
+	token, err = jwt.ParseWithClaims(tokenString, claims, keyFunc)
+
+	// Maybe we need a second try with time window
+	if err != nil && timeWindow != 0 {
+		if e, ok := errors.Cause(err).(*jwt.ValidationError); ok {
+			switch e.Errors {
+			// case jwt.ValidationErrorIssuedAt, jwt.ValidationErrorExpired, jwt.ValidationErrorNotValidYet:
+			case jwt.ValidationErrorIssuedAt:
+				if token.Claims.(jwt.MapClaims).VerifyIssuedAt(time.Now().Add(timeWindow).Unix(), true) {
+					e.Errors &^= jwt.ValidationErrorIssuedAt
+				}
+			case jwt.ValidationErrorExpired:
+				if token.Claims.(jwt.MapClaims).VerifyExpiresAt(time.Now().Add(-timeWindow).Unix(), true) {
+					e.Errors &^= jwt.ValidationErrorExpired
+				}
+			case jwt.ValidationErrorNotValidYet:
+				if token.Claims.(jwt.MapClaims).VerifyNotBefore(time.Now().Add(timeWindow).Unix(), true) {
+					e.Errors &^= jwt.ValidationErrorNotValidYet
 				}
 			}
 		}
-		return false
-	}
-	doParse := func(window time.Duration) (*jwt.Token, error) {
-		jwt.TimeFunc = func() time.Time {
-			return time.Now().Add(window)
+		if errors.Cause(err).(*jwt.ValidationError).Errors == 0 {
+			err = nil
+			token.Valid = true
 		}
-		return jwt.ParseWithClaims(tokenString, claims, keyFunc)
 	}
 
-	// First try with "+" window
-	token, err = doParse(timeWindow)
-
-	// Maybe we need a second try with "-" window
-	if doRetry(err) {
-		token, err = doParse(-1 * timeWindow)
-	}
-
-	jwt.TimeFunc = timeFuncOriginal
 	return token, err
 }
