@@ -116,6 +116,13 @@ func TestJWTParseUsingTimeWindow(t *testing.T) {
 			window:        2,
 			iat:           time.Now().Add(-1 * time.Second).Unix(),
 			exp:           time.Now().Add(1 * time.Second).Unix(),
+			shouldSucceed: true,
+		},
+		{
+			description:   "token exp time is in the past even with window applied",
+			window:        2,
+			iat:           time.Now().Add(-1 * time.Second).Unix(),
+			exp:           time.Now().Add(-3 * time.Second).Unix(),
 			shouldSucceed: false,
 		},
 	} {
