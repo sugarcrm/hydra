@@ -131,6 +131,7 @@ OPENID CONNECT CONTROLS
 
 - JWT_PARSE_TIME_WINDOW: Time window in seconds for OAuth2 JWT token time-specific claims parsing.
 	Is useful if you producer/consumer servers are not accurately time-synced. Valid values are: 10, 17, 60, etc.
+	Should be less then expected JWT expiration time.
 	Defaults to JWT_PARSE_TIME_WINDOW=0
 
 
