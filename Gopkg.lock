@@ -129,7 +129,7 @@
   branch = "master"
   name = "github.com/golang/mock"
   packages = ["gomock"]
-  revision = "b3e60bcdc577185fce3cf625fc96b62857ce5574"
+  revision = "58cd061d09382b6011f84c1291ebe50ef2e25bab"
 
 [[projects]]
   branch = "master"
@@ -197,12 +197,6 @@
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
   version = "v1.0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/jehiah/go-strftime"
-  packages = ["."]
-  revision = "2efbe75097a505e2789f7e39cb9da067b5be8e3e"
 
 [[projects]]
   branch = "master"
@@ -322,8 +316,14 @@
     "manager/memory",
     "manager/sql"
   ]
-  revision = "941d70faef8cc9656a9f0d6403a108a08d2ab631"
-  version = "v0.8.6"
+  revision = "73217e44ed7e4a6bbd44ae7dd858d11932f08cf8"
+  version = "v0.8.8"
+
+[[projects]]
+  name = "github.com/ory/pagination"
+  packages = ["."]
+  revision = "abd7ec33a01fdec119267449c8f3bad187f881f6"
+  version = "v0.0.1"
 
 [[projects]]
   name = "github.com/pborman/uuid"
@@ -373,8 +373,8 @@
 [[projects]]
   name = "github.com/segmentio/analytics-go"
   packages = ["."]
-  revision = "2d840d861c322bdf5346ba7917af1c2285e653d3"
-  version = "2.1.1"
+  revision = "1178b964a36694a8f9c161b19e6fe28cb37e8482"
+  version = "3.0.0"
 
 [[projects]]
   branch = "master"
@@ -564,6 +564,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "85bb94a8132a0602298667432a29f9682ca2c780581a64ba918f36752b4f6468"
+  inputs-digest = "2e14727e5b5e853a48bf05d372a69685f9f55a51d04934a26a4ebf470aaf8066"
   solver-name = "gps-cdcl"
   solver-version = 1

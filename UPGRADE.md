@@ -10,6 +10,8 @@ before finalizing the upgrade process.
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 
+- [0.11.3](#0113)
+- [0.11.0](#0110)
 - [0.10.0](#0100)
   - [Breaking Changes](#breaking-changes)
     - [Introspection now requires authorization](#introspection-now-requires-authorization)
@@ -51,6 +53,20 @@ before finalizing the upgrade process.
     - [Best practice HTTP server config](#best-practice-http-server-config)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## 0.11.3
+
+The experimental endpoint `/health/metrics` has been removed as it caused various issues such as increased memory usage,
+and it was apparently not used at all.
+
+## 0.11.0
+
+This release has a minor breaking change in the experimental Warden Group SDK: 
+`FindGroupsByMember(member string) ([]swagger.Group, *swagger.APIResponse, error)` is now
+`ListGroups(member string, limit, offset int64) ([]swagger.Group, *swagger.APIResponse, error)`.
+The change has to be applied in a similar fashion to other SDKs generated using swagger.
+
+Leave the `member` parameter empty to list all groups, and add it to filter groups by member id.
 
 ## 0.10.0
 
