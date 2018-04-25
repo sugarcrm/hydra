@@ -21,10 +21,12 @@ import (
 	"github.com/ory/herodot"
 	"github.com/ory/hydra/firewall"
 	"github.com/ory/hydra/metrics"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
 	HealthStatusPath = "/health/status"
+	MetricsStatusPath = "/health/metrics"
 )
 
 type Handler struct {
@@ -48,6 +50,7 @@ func (h *Handler) PrefixResource(resource string) string {
 
 func (h *Handler) SetRoutes(r *httprouter.Router) {
 	r.GET(HealthStatusPath, h.Health)
+	r.Handler("GET", MetricsStatusPath, promhttp.Handler())
 }
 
 // swagger:route GET /health/status health getInstanceStatus

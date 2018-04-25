@@ -104,9 +104,7 @@ func RunHost(c *config.Config) func(cmd *cobra.Command, args []string) {
 
 		if ok, _ := cmd.Flags().GetBool("disable-telemetry"); !ok && os.Getenv("DISABLE_TELEMETRY") != "1" {
 			metrics := c.GetMetrics()
-			go metrics.RegisterSegment()
-			go metrics.CommitMemoryStatistics()
-			n.Use(metrics)
+			metrics.RegisterHandlers(n)
 		}
 
 		n.Use(negronilogrus.NewMiddlewareFromLogger(logger, c.Issuer))

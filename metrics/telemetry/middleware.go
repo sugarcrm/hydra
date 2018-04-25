@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metrics
+package telemetry
 
 import (
 	"crypto/sha256"
@@ -37,7 +37,7 @@ import (
 	"github.com/urfave/negroni"
 )
 
-type MetricsManager struct {
+type TelemetryHandler struct {
 	sync.RWMutex `json:"-"`
 	start        time.Time          `json:"-"`
 	Segment      analytics.Client   `json:"-"`
@@ -70,7 +70,7 @@ func generateID(issuerURL string, databaseURL string) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-func NewMetricsManager(issuerURL string, databaseURL string, l logrus.FieldLogger, version, hash, buildTime string) *MetricsManager {
+func NewMetricsHandler(issuerURL string, databaseURL string, l logrus.FieldLogger, version, hash, buildTime string) *TelemetryHandler {
 	l.Info("Setting up telemetry - for more information please visit https://ory.gitbooks.io/hydra/content/telemetry.html")
 
 	segment, err := analytics.NewWithConfig("h8dRH3kVCWKkIFWydBmWsyYHR4M0u0vr", analytics.Config{
@@ -80,7 +80,7 @@ func NewMetricsManager(issuerURL string, databaseURL string, l logrus.FieldLogge
 		panic(fmt.Sprintf("Unable to initialise segment: %s", err))
 	}
 
-	mm := &MetricsManager{
+	mm := &TelemetryHandler{
 		InstanceID:       uuid.New(),
 		Segment:          segment,
 		Logger:           l,
@@ -94,10 +94,14 @@ func NewMetricsManager(issuerURL string, databaseURL string, l logrus.FieldLogge
 		salt:         uuid.New(),
 		BuildTime:    buildTime, BuildVersion: version, BuildHash: hash,
 	}
+
+	go mm.RegisterSegment()
+	go mm.CommitMemoryStatistics()
+
 	return mm
 }
 
-func (sw *MetricsManager) RegisterSegment() {
+func (sw *TelemetryHandler) RegisterSegment() {
 	sw.Lock()
 	defer sw.Unlock()
 
@@ -128,7 +132,7 @@ func (sw *MetricsManager) RegisterSegment() {
 	sw.Logger.Debug("Transmitted anonymized environment information")
 }
 
-func (sw *MetricsManager) CommitMemoryStatistics() {
+func (sw *TelemetryHandler) CommitMemoryStatistics() {
 	if !sw.shouldCommit {
 		sw.Logger.Info("Detected local environment, skipping telemetry commit")
 		return
@@ -159,7 +163,7 @@ func (sw *MetricsManager) CommitMemoryStatistics() {
 	}
 }
 
-func (sw *MetricsManager) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (sw *TelemetryHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	scheme := "https:"
 	if r.TLS == nil {
 		scheme = "http:"
